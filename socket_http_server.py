@@ -18,11 +18,21 @@ def start_server(port, log=False):
         print('stopping listener')
         exit(0)
     signal.signal(signal.SIGINT, signal_handler)
+    def recvall(sock):
+        BUFF_SIZE = 1024 # 4 KiB
+        data = b''
+        while True:
+            part = sock.recv(BUFF_SIZE)
+            data += part
+            if len(part) < BUFF_SIZE:
+                # either 0 or end of data
+                break
+        return data
     while True:
         try:
             con, (host, portr) = tcp.accept()
-            msg = con.recv(65000)
             print('* [' + datetime.now().strftime('%d/%m/%Y %H:%M:%S') + '] connection from: ' + host)
+            msg = recvall(con)
             print(msg.decode())
             # requestline = msg.decode().split('\r\n')[0]
             # path = re.sub('\s+HTTP.[0-9\.]+\s*$', '', re.sub('^[a-zA-Z]+\s+', '', requestline))[1:]
@@ -43,3 +53,4 @@ if len(sys.argv) > 1:
     port = sys.argv[1]
     
 start_server(port, 'http.log')
+# start_server(port)

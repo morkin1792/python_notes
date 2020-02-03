@@ -1,21 +1,31 @@
-from flask import Flask, request
-
+from flask import Flask, request, make_response
+from datetime import datetime
+import sys
 
 app = Flask(__name__)
 
+logf = open('flask.log', 'a')
 
-@app.route('/')
+@app.route('/', methods= ['GET', 'POST'])
 def hello():
-    print(request.args)
-    return '1'
+    # logf.write()
+    
+    logf.write('* [' + datetime.now().strftime('%d/%m/%Y %H:%M:%S') + '] connection from: ' + request.remote_addr + '\n')
+    logf.write(request.get_data().decode() + '\n')
+    logf.flush()
+    resp = make_response('1')
+    resp.headers['server'] = 'Server'
+    origin = request.headers.get('Origin')
+    if len(origin) < 1:
+        origin = request.headers.get('origin')
+    if len(origin) > 0:
+        resp.headers['Access-Control-Allow-Origin'] = origin
+    return resp
 
 app.handle_http_exception = hello
-
-
-# def handle_bad_request(e):
-#     return 'opa', 400
-
-
 app.register_error_handler(400, hello)
 
-app.run(port=3000)
+port = 8091
+if len(sys.argv) > 1:
+    port = sys.argv[1]
+app.run(port=port, host='0.0.0.0')
